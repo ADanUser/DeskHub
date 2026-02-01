@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="p-5 mb-4 bg-light rounded-3">
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">Найди идеальное рабочее место</h1>
+        <p class="col-md-8 fs-4">Бронируйте коворкинги и переговорные в пару кликов.</p>
+        
+        <form action="{% url 'venue_search' %}" method="get" class="row g-3 mt-4">
+            <div class="col-md-4">
+                <label for="city" class="form-label">Город</label>
+                <select name="city" id="city" class="form-select">
+                    <option value="" selected>Выберите город...</option>
+                    {% for city in cities %}
+                    <option value="{{ city.id }}">{{ city.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 align-self-end">
+                <button type="submit" class="btn btn-primary w-100">Найти</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

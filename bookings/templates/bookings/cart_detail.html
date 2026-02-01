@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Корзина | DeskHub{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4">Корзина</h2>
+    
+    {% if slots %}
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Коворкинг</th>
+                                <th>Тип</th>
+                                <th>Дата</th>
+                                <th>Время</th>
+                                <th>Цена</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for slot in slots %}
+                            <tr>
+                                <td>
+                                    <strong>{{ slot.venue.name }}</strong><br>
+                                    <small class="text-muted">{{ slot.venue.city.name }}</small>
+                                </td>
+                                <td>{{ slot.get_resource_type_display }}</td>
+                                <td>{{ slot.date|date:"d.m.Y" }}</td>
+                                <td>{{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}</td>
+                                <td>{{ slot.price }} ₽</td>
+                                <td>
+                                    <a href="{% url 'cart_remove' slot.id %}" class="btn btn-sm btn-outline-danger">
+                                        Удалить
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light">
+                                <td colspan="4" class="text-end fw-bold fs-5">Итого:</td>
+                                <td colspan="2" class="fw-bold fs-5 text-primary">{{ total_price }} ₽</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{% url 'venue_search' %}" class="btn btn-outline-secondary">
+                        &larr; Продолжить поиск
+                    </a>
+                    <form action="{% url 'checkout' %}" method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-lg">Оформить заказ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-cart-x display-1 text-muted"></i>
+            </div>
+            <h3>Ваша корзина пуста</h3>
+            <p class="text-muted mb-4">Посмотрите доступные слоты в наших коворкингах.</p>
+            <a href="{% url 'venue_search' %}" class="btn btn-primary btn-lg">Найти место</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

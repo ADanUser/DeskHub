@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-3 mb-4">
+        <div class="glass-card p-4 sticky-top" style="top: 100px; z-index: 1;">
+            <h4 class="mb-3">Фильтры</h4>
+            <form action="{% url 'venue_search' %}" method="get">
+
+                {% if selected_city %}
+                <input type="hidden" name="city" value="{{ selected_city }}">
+                <div class="mb-3">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill w-100 text-center">
+                        <i class="bi bi-geo-alt-fill me-1"></i> 
+                        {% for city in cities %}
+                            {% if city.id == selected_city %}{{ city.name }}{% endif %}
+                        {% endfor %}
+                    </span>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="date" class="form-label small text-muted fw-bold">Дата</label>
+                    <input type="date" name="date" id="date" class="form-control bg-white border-0 shadow-sm" 
+                           value="{{ selected_date|default:'' }}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="resource_type" class="form-label small text-muted fw-bold">Тип места</label>
+                    <select name="resource_type" id="resource_type" class="form-select bg-white border-0 shadow-sm">
+                        <option value="">Любой</option>
+                        <option value="workplace" {% if selected_type == 'workplace' %}selected{% endif %}>Рабочее место</option>
+                        <option value="meeting_room" {% if selected_type == 'meeting_room' %}selected{% endif %}>Переговорная</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Применить</button>
+                <a href="{% url 'venue_search' %}" class="btn btn-link w-100 text-decoration-none text-muted mt-2">Сбросить</a>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-9">
+        <h2 class="mb-4 text-white" style="text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            Найдено коворкингов: {{ venues.paginator.count }}
+        </h2>
+
+        {% for venue in venues %}
+        <div class="glass-card p-0 mb-4 overflow-hidden d-flex flex-column flex-md-row transition-hover">
+            
+            <div class="bg-secondary bg-opacity-25 d-flex align-items-center justify-content-center overflow-hidden" style="min-width: 250px; width: 250px; min-height: 200px;">
+                {% if venue.image %}
+                    <img src="{{ venue.image.url }}" alt="{{ venue.name }}" class="w-100 h-100 object-fit-cover">
+                {% else %}
+                    <span class="text-muted">Фото отсутствует</span>
+                {% endif %}
+            </div>
+            
+            <div class="p-4 flex-grow-1 d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="text-uppercase text-muted small fw-bold mb-1">{{ venue.city.name }}</h5>
+                        <h3 class="mb-2">{{ venue.name }}</h3>
+                    </div>
+                    <span class="badge bg-success bg-opacity-75 rounded-pill px-3 py-2">Открыто</span>
+                </div>
+                
+                <p class="text-muted mb-3 flex-grow-1">{{ venue.description|truncatewords:20 }}</p>
+                
+                <div class="d-flex align-items-center justify-content-between mt-auto">
+                    <div class="small text-muted">
+                        <i class="bi bi-geo-alt-fill me-1"></i> {{ venue.address }}
+                    </div>
+                    <a href="{% url 'venue_detail' venue.id %}?{% if selected_date %}date={{ selected_date }}&{% endif %}{% if selected_type %}resource_type={{ selected_type }}{% endif %}" class="btn btn-outline-primary rounded-pill px-4">Подробнее</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="glass-card p-5 text-center">
+            <h3>Ничего не найдено</h3>
+            <p class="text-muted">Попробуйте изменить параметры поиска.</p>
+        </div>
+        {% endfor %}
+
+        <!-- Pagination -->
+        {% if venues.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if venues.has_previous %}
+                <li class="page-item">
+                    <a class="page-link glass-card border-0 text-primary" href="?page={{ venues.previous_page_number }}{% if selected_city %}&city={{ selected_city }}{% endif %}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_type %}&resource_type={{ selected_type }}{% endif %}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link glass-card border-0 text-muted" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for i in venues.paginator.page_range %}
+                    {% if venues.number == i %}
+                    <li class="page-item active"><a class="page-link bg-primary border-0" href="#">{{ i }}</a></li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link glass-card border-0 text-primary" href="?page={{ i }}{% if selected_city %}&city={{ selected_city }}{% endif %}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_type %}&resource_type={{ selected_type }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if venues.has_next %}
+                <li class="page-item">
+                    <a class="page-link glass-card border-0 text-primary" href="?page={{ venues.next_page_number }}{% if selected_city %}&city={{ selected_city }}{% endif %}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_type %}&resource_type={{ selected_type }}{% endif %}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link glass-card border-0 text-muted" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

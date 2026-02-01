@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <a href="{% url 'venue_search' %}" class="btn btn-outline-secondary mb-4">&larr; Назад к поиску</a>
+
+    <div class="card mb-5 shadow-sm overflow-hidden">
+        {% if venue.image %}
+            <div style="height: 400px; overflow: hidden;">
+                <img src="{{ venue.image.url }}" alt="{{ venue.name }}" class="w-100 h-100 object-fit-cover">
+            </div>
+        {% endif %}
+        <div class="card-body p-5">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h1 class="display-4 fw-bold mb-3">{{ venue.name }}</h1>
+                    <p class="lead text-muted mb-4">
+                        <i class="bi bi-geo-alt-fill me-2"></i>{{ venue.city.name }}, {{ venue.address }}
+                    </p>
+                </div>
+                <span class="badge bg-success fs-6 px-3 py-2">Открыто</span>
+            </div>
+            <hr>
+            <h4 class="mb-3">Описание</h4>
+            <p class="card-text fs-5">{{ venue.description|default:"Описание отсутствует." }}</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4 border-0 shadow-sm bg-light">
+        <div class="card-body p-4">
+            <h5 class="card-title mb-3">Фильтр слотов</h5>
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="date" class="form-label small text-muted">Дата</label>
+                    <input type="date" name="date" id="date" class="form-control" value="{{ selected_date|default:'' }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="resource_type" class="form-label small text-muted">Тип места</label>
+                    <select name="resource_type" id="resource_type" class="form-select">
+                        <option value="">Все типы</option>
+                        <option value="workplace" {% if selected_type == 'workplace' %}selected{% endif %}>Рабочее место</option>
+                        <option value="meeting_room" {% if selected_type == 'meeting_room' %}selected{% endif %}>Переговорная</option>
+                    </select>
+                </div>
+                <div class="col-md-4 align-self-end">
+                    <button type="submit" class="btn btn-primary w-100">Применить</button>
+                </div>
+            </form>
+            {% if selected_date or selected_type %}
+                <div class="mt-3">
+                    <a href="{% url 'venue_detail' venue.id %}" class="text-decoration-none text-muted small">
+                        <i class="bi bi-x-circle me-1"></i>Сбросить фильтры
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Slots Calendar/List -->
+    <h3 class="mb-4">Доступные слоты</h3>
+    
+    {% if slots %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for slot in slots %}
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm hover-card">
+                    <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-primary bg-opacity-10 text-primary">{{ slot.get_resource_type_display }}</span>
+                            <span class="fw-bold text-muted">{{ slot.date|date:"d E Y" }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body px-4">
+                        <h2 class="card-title text-primary mb-0">{{ slot.start_time|time:"H:i" }}</h2>
+                        <p class="text-muted small">до {{ slot.end_time|time:"H:i" }}</p>
+                        <div class="d-flex justify-content-between align-items-end mt-4">
+                            <div>
+                                <span class="d-block text-muted small">Цена</span>
+                                <span class="fs-4 fw-bold">{{ slot.price }} ₽</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white border-top-0 px-4 pb-4">
+                        {% if slot.id in request.cart_ids %}
+                            <button 
+                                class="btn btn-secondary w-100 rounded-pill cart-toggle-btn" 
+                                data-slot-id="{{ slot.id }}"
+                                data-url="{% url 'toggle_cart' slot.id %}">
+                                В корзине
+                            </button>
+                        {% else %}
+                            <button 
+                                class="btn btn-primary w-100 rounded-pill cart-toggle-btn" 
+                                data-slot-id="{{ slot.id }}"
+                                data-url="{% url 'toggle_cart' slot.id %}">
+                                В корзину
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if slots.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-5">
+            <ul class="pagination justify-content-center">
+                {% if slots.has_previous %}
+                <li class="page-item">
+                    <a class="page-link border-0 text-primary shadow-sm" href="?page={{ slots.previous_page_number }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_type %}&resource_type={{ selected_type }}{% endif %}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link border-0 text-muted shadow-sm" href="#" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for i in slots.paginator.page_range %}
+                    {% if slots.number == i %}
+                    <li class="page-item active"><a class="page-link bg-primary border-0 shadow-sm" href="#">{{ i }}</a></li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link border-0 text-primary shadow-sm" href="?page={{ i }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_type %}&resource_type={{ selected_type }}{% endif %}">{{ i }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if slots.has_next %}
+                <li class="page-item">
+                    <a class="page-link border-0 text-primary shadow-sm" href="?page={{ slots.next_page_number }}{% if selected_date %}&date={{ selected_date }}{% endif %}{% if selected_type %}&resource_type={{ selected_type }}{% endif %}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link border-0 text-muted shadow-sm" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-warning text-center p-5" role="alert">
+            <h4 class="alert-heading">Нет доступных слотов</h4>
+            <p>К сожалению, на данный момент нет свободных мест в этом коворкинге.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const buttons = document.querySelectorAll('.cart-toggle-btn');
+    const cartBadge = document.getElementById('cart-badge');
+
+    buttons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = this.dataset.url;
+            
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Обновляем текст и стиль кнопки
+                    if (data.action === 'added') {
+                        this.textContent = 'В корзине';
+                        this.classList.remove('btn-primary');
+                        this.classList.add('btn-secondary');
+                    } else {
+                        this.textContent = 'В корзину';
+                        this.classList.remove('btn-secondary');
+                        this.classList.add('btn-primary');
+                    }
+                    
+                    // Обновляем бейдж в навбаре
+                    if (cartBadge) {
+                        cartBadge.textContent = data.cart_count;
+                        if (data.cart_count > 0) {
+                            cartBadge.classList.remove('d-none');
+                        } else {
+                            cartBadge.classList.add('d-none');
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+});
+</script>
+{% endblock %}
