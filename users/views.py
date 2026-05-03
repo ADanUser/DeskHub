@@ -29,10 +29,6 @@ def login_view(request):
                 login(request, user)
                 messages.info(request, f"Добро пожаловать, {username}!")
                 return redirect('home')
-            else:
-                messages.error(request, "Неверное имя пользователя или пароль.")
-        else:
-             messages.error(request, "Неверное имя пользователя или пароль.")
     else:
         form = AuthenticationForm()
     return render(request, 'users/login.html', {'form': form})
